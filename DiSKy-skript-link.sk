@@ -1,0 +1,55 @@
+options:
+  prefix: '&7[&bDiscord&7]&r'
+  
+command /link:
+  aliases: /discord
+  permission: link.discord
+  trigger:
+    if player has permission "link.discord":
+      execute console command "discord link %player%"
+
+command /unlink:
+  aliases: /discord unlink
+  permission: unlink.discord
+  trigger:
+    if player has permission "unlink.discord":
+      execute console command "discord unlink %player%"
+
+on discord command:
+  description: Link your Minecraft account to your Discord account
+  usage: /link <code>
+  trigger:
+    if arg-1 is not set:
+      reply with "&cUsage: /link <code>"
+      stop
+    set {link.code.%discord id of user%} to random integer between 1000 and 9999
+    if {link.code.%discord id of user%} is in {linked.players}:
+      set {link.code.%discord id of user%} to random integer between 1000 and 9999
+    set {linked.players::%{link.code.%discord id of user%}%} to player
+    set {linked.players.%player%} to {link.code.%discord id of user%}
+    execute console command "discord verify %discord id of user% {link.code.%discord id of user%}"
+    wait 3 seconds
+    if {verified} is not set:
+      reply with "&cCould not verify your Discord account."
+      stop
+    set {_number} to {link.code.%discord id of user%}
+    execute console command "tellraw %player% {\"text\":\"Your code is \",\"color\":\"yellow\"}"
+    execute console command "tellraw %player% {\"text\":\"%{_number}%\",\"color\":\"green\"}"
+    set {_discord_nick} to "{displayname}"
+    execute console command "nick %player% to %player's name%"
+    execute console command "discord link %player% to %discord id of user%"
+    broadcast "&a%{_discord_nick}% &7has linked their Discord account to their Minecraft account and received a reward!"
+    # Add your reward here
+
+on discord unlink:
+  description: Unlink your Minecraft account from your Discord account
+  trigger:
+    if {linked.players.%player%} is set:
+      set {discord.id} to discord id of user
+      delete {link.code.%discord.id%}
+      delete {linked.players::%{linked.players.%player%}%}
+      delete {linked.players.%player%}
+      execute console command "discord unlink %player%"
+      broadcast "&c%player% &7has unlinked their Discord account from their Minecraft account."
+    else:
+      reply with "&cYour Minecraft account is not linked to a Discord account."
